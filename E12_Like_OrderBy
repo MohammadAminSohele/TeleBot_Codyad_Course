@@ -1,0 +1,55 @@
+import sqlite3
+
+conn = sqlite3.connect('Sample.db')
+
+cursor = conn.cursor()
+
+# cursor.execute(
+#     '''
+
+#     SELECT user_username,user_family,user_phone FROM users WHERE user_phone LIKE ?
+
+#     ''',
+#     ('0910%',)
+# )
+# cursor.execute(
+#     '''
+
+#     SELECT user_name,user_family,user_phone FROM users WHERE user_name LIKE ?
+
+#     ''',
+#     ('A%',)
+# )
+# cursor.execute(
+#     '''
+
+#     SELECT user_name,user_family,user_phone FROM users WHERE user_name LIKE ?
+
+#     ''',
+#     ('%Hossen',)
+# )
+# cursor.execute(
+#     '''
+
+#     SELECT user_name,user_family,user_phone FROM users WHERE user_name LIKE ?
+
+#     ''',
+#     ('A_i%',)
+# )
+cursor.execute(
+    '''
+
+    SELECT * FROM users ORDER BY user_name DESC
+
+    '''
+)
+
+
+Rows = cursor.fetchall()
+for r in Rows:
+    print(r)
+
+
+
+conn.commit()
+conn.close()
