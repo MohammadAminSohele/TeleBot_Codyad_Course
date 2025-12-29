@@ -55,5 +55,14 @@ def choose_date(call):
     for slot_id,time in times:
         markup.add(types.InlineKeyboardButton(time,callback_data=f"time_{slot_id}"))
     bot.send_message(call.message.chat.id,'choose your time',reply_markup=markup)
+""" confirm """
+@bot.callback_query_handler(func=lambda call:call.data.startswith('time_'))
+def confirm(call):
+    user_id = str(call.from_user.id)
+    slot_id = int(call.data.split('_')[1])
+    query.book_appointments(user_id,slot_id)
+    query.update_slots_status(slot_id)
+    bot.send_message(call.message.chat.id,'Appoinments books and time reserved')
+    user_state.pop(call.from_user.id,None)
 """  """
 bot.polling()

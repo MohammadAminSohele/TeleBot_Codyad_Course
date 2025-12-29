@@ -67,3 +67,21 @@ def insert_slots(slot_id,date,times):
 
     conn.commit()
     conn.close()
+
+""" book appointments """
+def book_appointments(user_id,slot_id):
+    conn,cursor = connect()
+
+    cursor.execute("INSERT INTO appointments (user_id,slot_id) VALUES(?,?)",(user_id,slot_id))
+
+    conn.commit()
+    conn.close()
+
+""" Update slot status """
+def update_slots_status(slot_id):
+    conn,cursor = connect()
+
+    cursor.execute("UPDATE slots SET status = 'booked' WHERE slot_id=? ",(slot_id,))
+
+    conn.commit()
+    conn.close()
