@@ -64,5 +64,28 @@ def confirm(call):
     query.update_slots_status(slot_id)
     bot.send_message(call.message.chat.id,'Appoinments books and time reserved')
     user_state.pop(call.from_user.id,None)
+""" show appointments """
+@bot.message_handler(func=lambda message:message.text=='My Appointments')
+def show_appointments(message):
+    user_id = str(message.from_user.id)
+    chat_id = message.chat.id
+    if user_id in admins:
+        appointments = query.get_admin_appointments(user_id)
+        if not appointments:
+            bot.send_message(chat_id,'no appointments have been booked for yor service yet')
+            return
+        text = "📋 Appointments booked by users:\n\n"
+        for date,time,service,username in appointments:
+            text+=f"• {service} booked on {date} at {time} - booked by @{username}\n"
+        bot.send_message(chat_id,text)
+    else:
+        appointments=query.get_user_appointments(user_id)
+        if not appointments:
+            bot.send_message(chat_id,'you have no appointments yet')
+            return
+        text = "📅 your appointments:\n\n"
+        for date,time,service in appointments:
+            text+=f"• {service} on {date} at {time}\n"
+        bot.send_message(chat_id,text)
 """  """
 bot.polling()
