@@ -141,8 +141,6 @@ def handle_admin_input(message):
             bot.send_message(chat_id,f'✅ Service {admin_stage['service_name']} wiht {len(admin_stage['dates'])}')
             user_state.pop(admin_id)
 """  """
-bot.polling()
-
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
 def webhook():
     raw = request.get_data().decode("utf-8")
