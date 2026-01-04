@@ -99,3 +99,22 @@ def get_admin_appointments(admin_id):
     result = cursor.fetchall()
     conn.close()
     return result
+
+def insert_slots(service_id,date,times):
+    conn,cursor = connect()
+
+    for time in times:
+        cursor.execute("INSERT INTO slots (service_id,date,time,status) VALUES (?,?,?,'available')",(service_id,date,time))
+
+    conn.commit()
+    conn.close()
+
+def insert_service(name,admin_id):
+    conn,cursor = connect()
+
+    cursor.execute("INSERT INTO services (name,admin_id) VALUES (?,?)",(name,admin_id))
+    service_id = cursor.lastrowid
+
+    conn.commit()
+    conn.close()
+    return service_id

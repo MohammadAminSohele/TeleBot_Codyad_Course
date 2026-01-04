@@ -23,7 +23,7 @@ def start_cdm(message):
     MarkUp.row('Available Servises','My Appointments')
 
     if user_id in admins:
-        MarkUp.row('Add service')
+        MarkUp.row('➕Add service')
 
     bot.send_message(chat_id,f'Welcome to our bot {user_name} \n please choose an option',reply_markup=MarkUp)
 """ Service """
@@ -62,7 +62,7 @@ def confirm(call):
     slot_id = int(call.data.split('_')[1])
     query.book_appointments(user_id,slot_id)
     query.update_slots_status(slot_id)
-    bot.send_message(call.message.chat.id,'Appoinments books and time reserved')
+    bot.send_message(call.message.chat.id,'✅ Appoinments books and time reserved')
     user_state.pop(call.from_user.id,None)
 """ show appointments """
 @bot.message_handler(func=lambda message:message.text=='My Appointments')
@@ -72,7 +72,7 @@ def show_appointments(message):
     if user_id in admins:
         appointments = query.get_admin_appointments(user_id)
         if not appointments:
-            bot.send_message(chat_id,'no appointments have been booked for yor service yet')
+            bot.send_message(chat_id,'📭 no appointments have been booked for yor service yet')
             return
         text = "📋 Appointments booked by users:\n\n"
         for date,time,service,username in appointments:
@@ -87,5 +87,51 @@ def show_appointments(message):
         for date,time,service in appointments:
             text+=f"• {service} on {date} at {time}\n"
         bot.send_message(chat_id,text)
+""" ServiceName """
+@bot.message_handler(func=lambda m:m.text=='➕Add service')
+def ask_servic_name(message):
+    chat_id = message.chat.id
+    admin_id = str(message.from_user.id)
+    if admin_id not in admins:
+        bot.send_message(chat_id,'❌ you dont have permissionto add service')
+    user_state[admin_id]={'step':'service_name','dates':[],'slots':[]}
+    bot.send_message(chat_id,'📝 enter your service name:')
+""" Handle Admin Input """
+@bot.message_handler(func=lambda m:str(m.from_user.id) in user_state)
+def handle_admin_input(message):
+    chat_id = message.chat.id
+    admin_id = str(message.from_user.id)
+    admin_stage=user_state[admin_id]
+    step = admin_stage['step']
+    if step=='service_name':
+        admin_stage['service_name']=message.text.strip()
+        admin_stage['step']='add_date'
+        bot.send_message(chat_id,'📅 Enter a date (YYYY-MM-DD), or type "done" when finished:')
+    elif step=='add_date':
+        text = message.text.strip()
+        if text.lower()=='done':
+            if not admin_stage['dates']:
+                bot.send_message(chat_id,'⚠️ You must enter at least one date.')
+                return
+            admin_stage['date_index']=0
+            admin_stage['step']='add_time'
+            bot.send_message(chat_id,f'⏰ enter time for {admin_stage['dates'][0]} divide with (comma-seperate)')
+        else:
+            admin_stage['dates'].append(text)
+            bot.send_message(chat_id,'✅ date booked successfuly,add another date or type done')
+    elif step=='add_time':
+        times = [time.strip() for time in message.text.split('_') if time.strip()]
+        dates = admin_stage['dates'][admin_stage['date_index']]
+        admin_stage['slots'].append((dates,times))
+        admin_stage['date_index']+=1
+        if admin_stage['date_index'] < len(admin_stage['dates']):
+            next_date=admin_stage['dates'][admin_stage['date_index']]
+            bot.send_message(chat_id,f'⏰ enter time for {next_date}')
+        else:
+            service_id = query.insert_service(admin_stage['service_name'],admin_id)
+            for date,time in admin_stage['slots']:
+                query.insert_slots(service_id,date,time)
+            bot.send_message(chat_id,f'✅ Service {admin_stage['service_name']} wiht {len(admin_stage['dates'])}')
+            user_state.pop(admin_id)
 """  """
 bot.polling()
