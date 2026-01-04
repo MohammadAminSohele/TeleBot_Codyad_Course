@@ -122,7 +122,7 @@ def handle_admin_input(message):
                 return
             admin_stage['date_index']=0
             admin_stage['step']='add_time'
-            bot.send_message(chat_id,f'⏰ enter time for {admin_stage['dates'][0]} divide with (comma-seperate)')
+            bot.send_message(chat_id, f'⏰ enter time for {admin_stage["dates"][0]} divide with (comma-seperate)')
         else:
             admin_stage['dates'].append(text)
             bot.send_message(chat_id,'✅ date booked successfuly,add another date or type done')
