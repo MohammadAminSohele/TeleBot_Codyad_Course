@@ -4,10 +4,17 @@ from dotenv import load_dotenv
 import os 
 import query
 """  """
-load_dotenv()
-bot_token = os.getenv('bot_token')
+import flask
+from flask import request
 
-bot = TeleBot(bot_token)
+from schema import create_tables
+"""  """
+load_dotenv()
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+
+bot = TeleBot(BOT_TOKEN)
+
+app = flask.Flask(__name__)
 
 user_state = {} 
 """ Start """
@@ -135,3 +142,20 @@ def handle_admin_input(message):
             user_state.pop(admin_id)
 """  """
 bot.polling()
+
+@app.route(f"/{BOT_TOKEN}", methods=["POST"])
+def webhook():
+    raw = request.get_data().decode("utf-8")
+    print(f"📦 Raw update: {raw}")  # Log the full payload
+    update = types.Update.de_json(raw)
+    print(f"✅ Parsed update: {update}")  # Log the parsed object
+    bot.process_new_updates([update])
+    return "OK", 200
+
+
+@app.route("/")
+def index():
+    return "Bot is running!", 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)

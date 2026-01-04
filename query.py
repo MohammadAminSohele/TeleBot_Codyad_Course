@@ -1,19 +1,15 @@
-import sqlite3
-from dotenv import load_dotenv
-import os 
-
-load_dotenv()
-bot_db = os.getenv('bot_db')
+import psycopg2
+from schema import db_url
 
 def connect():
-    conn = sqlite3.connect(bot_db)
+    conn = psycopg2.connect(db_url)
     cursor = conn.cursor()
     return conn , cursor
 
 def insert_user(user_id, username):
     conn ,cursor = connect()
 
-    cursor.execute("INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)", (user_id, username))
+    cursor.execute("INSERT OR IGNORE INTO users (user_id, username) VALUES (%s, %s)", (user_id, username))
 
     conn.commit()
     conn.close()
@@ -30,7 +26,7 @@ def get_services():
 def get_dates(service_id):
     conn, cursor  = connect()
 
-    cursor.execute("SELECT DISTINCT date FROM slots WHERE service_id = ?", (service_id,))
+    cursor.execute("SELECT DISTINCT date FROM slots WHERE service_id = %s", (service_id,))
     dates = [row[0] for row in cursor.fetchall()]
 
     conn.close()
@@ -41,7 +37,7 @@ def get_times(service_id, date):
 
     cursor.execute("""
         SELECT slot_id, time FROM slots
-        WHERE service_id = ? AND date = ? AND status = 'available'
+        WHERE service_id = %s AND date = %s AND status = 'available'
         ORDER BY time ASC
     """, (service_id, date))
     times = cursor.fetchall()
@@ -52,7 +48,7 @@ def get_times(service_id, date):
 def book_appointments(user_id,slot_id):
     conn,cursor = connect()
 
-    cursor.execute("INSERT INTO appointments (user_id,slot_id) VALUES(?,?)",(user_id,slot_id))
+    cursor.execute("INSERT INTO appointments (user_id,slot_id) VALUES(%s,%s)",(user_id,slot_id))
 
     conn.commit()
     conn.close()
@@ -60,7 +56,7 @@ def book_appointments(user_id,slot_id):
 def update_slots_status(slot_id):
     conn,cursor = connect()
 
-    cursor.execute("UPDATE slots SET status = 'booked' WHERE slot_id=? ",(slot_id,))
+    cursor.execute("UPDATE slots SET status = 'booked' WHERE slot_id=%s ",(slot_id,))
 
     conn.commit()
     conn.close()
@@ -74,7 +70,7 @@ def get_user_appointments(user_id):
         FROM appointments a
         JOIN slots s ON a.slot_id=s.slot_id
         JOIN services sv ON sv.service_id=s.service_id
-        WHERE a.user_id=?
+        WHERE a.user_id=%s
         ORDER BY s.date,s.time
         """,(user_id,)
     )
@@ -92,7 +88,7 @@ def get_admin_appointments(admin_id):
         JOIN slots s ON s.slot_id = a.slot_id
         JOIN services sv ON s.service_id = sv.service_id
         JOIN users u ON u.user_id = a.user_id
-        WHERE sv.admin_id = ?
+        WHERE sv.admin_id = %s
         ORDER BY s.date,s.time
         """,(admin_id,)
     )
@@ -104,7 +100,7 @@ def insert_slots(service_id,date,times):
     conn,cursor = connect()
 
     for time in times:
-        cursor.execute("INSERT INTO slots (service_id,date,time,status) VALUES (?,?,?,'available')",(service_id,date,time))
+        cursor.execute("INSERT INTO slots (service_id,date,time,status) VALUES (%s,%s,%s,'available')",(service_id,date,time))
 
     conn.commit()
     conn.close()
@@ -112,7 +108,7 @@ def insert_slots(service_id,date,times):
 def insert_service(name,admin_id):
     conn,cursor = connect()
 
-    cursor.execute("INSERT INTO services (name,admin_id) VALUES (?,?)",(name,admin_id))
+    cursor.execute("INSERT INTO services (name,admin_id) VALUES (%s,%s)",(name,admin_id))
     service_id = cursor.lastrowid
 
     conn.commit()
